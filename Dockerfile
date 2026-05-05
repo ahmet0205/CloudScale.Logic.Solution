@@ -12,7 +12,7 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["SmartCity.Enterprise.API.csproj", "."]
+COPY ["CloudScale.Logic.API/CloudScale.Logic.API.csproj", "CloudScale.Logic.API/"]
 RUN dotnet restore "./SmartCity.Enterprise.API.csproj"
 COPY . .
 WORKDIR "/src/."
