@@ -1,0 +1,163 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CloudScale | Kargo Takip Sistemi</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f4f7f6;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background-color: #2c3e50;
+        }
+
+        .card {
+            border: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .btn-primary {
+            background-color: #2980b9;
+            border: none;
+        }
+
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.85em;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="#">CloudScale Logistics</a>
+            <span class="text-light">📍 Ohio Cloud Database Active</span>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row">
+            <!-- Kargo Ekleme Formu -->
+            <div class="col-md-4">
+                <div class="card p-4 mb-4">
+                    <h5 class="card-title mb-3">Yeni Kargo Kaydı</h5>
+                    <div class="mb-3">
+                        <label class="form-label">Gönderici</label>
+                        <input type="text" id="senderName" class="form-control" placeholder="Ad Soyad">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Alıcı</label>
+                        <input type="text" id="receiverName" class="form-control" placeholder="Ad Soyad">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Varış Şehri</label>
+                        <input type="text" id="destinationCity" class="form-control" placeholder="Örn: Ankara">
+                    </div>
+                    <button onclick="addShipment()" class="btn btn-primary w-100">Kargoyu Kaydet</button>
+                </div>
+            </div>
+
+            <!-- Kargo Listesi -->
+            <div class="col-md-8">
+                <div class="card p-4">
+                    <h5 class="card-title mb-3">Güncel Sevkiyatlar</h5>
+                    <div class="mb-3">
+                        <input type="text" id="searchInput" class="form-control" placeholder="🔍 Takip No ile Ara..." onkeyup="filterShipments()">
+                    </div>
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Takip No</th>
+                                <th>Alıcı</th>
+                                <th>Şehir</th>
+                                <th>Durum</th>
+                            </tr>
+                        </thead>
+                        <tbody id="shipmentList">
+                            <!-- Veriler buraya JS ile dolacak -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    const apiUri = '/api/Shipments';
+
+    // 1. Kargoları Ohio'dan Getir
+    async function loadShipments() {
+        const response = await fetch(apiUri);
+        const data = await response.json();
+        const list = document.getElementById('shipmentList');
+        list.innerHTML = '';
+
+        data.forEach(s => {
+            list.innerHTML += `
+                <tr>
+                    <td><strong>${s.trackingNumber}</strong></td>
+                    <td>${s.receiverName}</td>
+                    <td>${s.destinationCity}</td>
+                    <td><span class="badge bg-success status-badge">${s.currentStatus}</span></td>
+                </tr>
+            `;
+        });
+    }
+
+    // 2. Yeni Kargo Gönder
+        async function addShipment() {
+            // Form verilerini alıyoruz
+            const shipment = {
+                senderName: document.getElementById('senderName').value,
+                receiverName: document.getElementById('receiverName').value,
+                destinationCity: document.getElementById('destinationCity').value,
+                // API'nin beklediği ama formda olmayan zorunlu alanları ekliyoruz:
+                trackingNumber: "CS-PENDING", // Bu alanı API tarafında zaten güncelleyeceğiz
+                currentStatus: "Package Received"
+            };
+
+            const response = await fetch(apiUri, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(shipment)
+            });
+
+            if (response.ok) {
+                alert("Kargo Ohio Veritabanına İşlendi!");
+                loadShipments(); // Tabloyu tazele
+            } else {
+                const errorData = await response.json();
+                console.log("Hata Detayı:", errorData);
+                alert("Bir hata oluştu, konsola bakabilirsin.");
+            }
+        }
+
+    // Sayfa açıldığında verileri yükle
+        loadShipments();
+        function filterShipments() {
+            let input = document.getElementById('searchInput').value.toUpperCase();
+            let table = document.getElementById('shipmentList');
+            let rows = table.getElementsByTagName('tr');
+
+            for (let i = 0; i < rows.length; i++) {
+                let td = rows[i].getElementsByTagName('td')[0]; // Takip No sütunu
+                if (td) {
+                    let textValue = td.textContent || td.innerText;
+                    if (textValue.toUpperCase().indexOf(input) > -1) {
+                        rows[i].style.display = "";
+                    } else {
+                        rows[i].style.display = "none";
+                    }
+                }
+            }
+        }
+    </script>
+
+</body>
+</html>
