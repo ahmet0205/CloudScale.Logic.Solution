@@ -43,7 +43,6 @@
 
     <div class="container">
         <div class="row">
-            <!-- Kargo Ekleme Formu -->
             <div class="col-md-4">
                 <div class="card p-4 mb-4">
                     <h5 class="card-title mb-3">Yeni Kargo Kaydı</h5>
@@ -63,7 +62,6 @@
                 </div>
             </div>
 
-            <!-- Kargo Listesi -->
             <div class="col-md-8">
                 <div class="card p-4">
                     <h5 class="card-title mb-3">Güncel Sevkiyatlar</h5>
@@ -80,7 +78,6 @@
                             </tr>
                         </thead>
                         <tbody id="shipmentList">
-                            <!-- Veriler buraya JS ile dolacak -->
                         </tbody>
                     </table>
                 </div>
@@ -93,32 +90,34 @@
 
         // 1. Kargoları Ohio'dan Getir
         async function loadShipments() {
-            const response = await fetch(apiUri);
-            const data = await response.json();
-            const list = document.getElementById('shipmentList');
-            list.innerHTML = '';
+            try {
+                const response = await fetch(apiUri);
+                const data = await response.json();
+                const list = document.getElementById('shipmentList');
+                list.innerHTML = '';
 
-            data.forEach(s => {
-                list.innerHTML += `
-                    <tr>
-                        <td><strong>${s.trackingNumber}</strong></td>
-                        <td>${s.receiverName}</td>
-                        <td>${s.destinationCity}</td>
-                        <td><span class="badge bg-success status-badge">${s.currentStatus}</span></td>
-                    </tr>
-                `;
-            });
+                data.forEach(s => {
+                    list.innerHTML += `
+                            <tr>
+                                <td><strong>${s.trackingNumber}</strong></td>
+                                <td>${s.receiverName}</td>
+                                <td>${s.destinationCity}</td>
+                                <td><span class="badge bg-success status-badge">${s.currentStatus}</span></td>
+                            </tr>
+                        `;
+                });
+            } catch (error) {
+                console.error("Yükleme hatası:", error);
+            }
         }
 
         // 2. Yeni Kargo Gönder
         async function addShipment() {
-            // Form verilerini alıyoruz
             const shipment = {
                 senderName: document.getElementById('senderName').value,
                 receiverName: document.getElementById('receiverName').value,
                 destinationCity: document.getElementById('destinationCity').value,
-                // API'nin beklediği ama formda olmayan zorunlu alanları ekliyoruz:
-                trackingNumber: "CS-PENDING", // Bu alanı API tarafında zaten güncelleyeceğiz
+                trackingNumber: "CS-PENDING",
                 currentStatus: "Package Received"
             };
 
@@ -130,66 +129,47 @@
 
             if (response.ok) {
                 alert("Kargo Ohio Veritabanına İşlendi!");
-                loadShipments(); // Tabloyu tazele
+                // Formu temizle
+                document.getElementById('senderName').value = '';
+                document.getElementById('receiverName').value = '';
+                document.getElementById('destinationCity').value = '';
+                loadShipments();
             } else {
-                const errorData = await response.json();
-                console.log("Hata Detayı:", errorData);
-                alert("Bir hata oluştu, konsola bakabilirsin.");
+                alert("Bir hata oluştu.");
+            }
+        }
+
+        // 3. Gerçek Zamanlı Arama
+        async function searchShipment() {
+            const trackingNo = document.getElementById('searchInput').value.trim();
+            const tableBody = document.getElementById('shipmentList');
+
+            if (!trackingNo) {
+                loadShipments();
+                return;
+            }
+
+            try {
+                const response = await fetch(`${apiUri}/search/${trackingNo}`);
+                if (response.ok) {
+                    const s = await response.json();
+                    tableBody.innerHTML = `
+                            <tr>
+                                <td><strong>${s.trackingNumber}</strong></td>
+                                <td>${s.receiverName}</td>
+                                <td>${s.destinationCity}</td>
+                                <td><span class="badge bg-success status-badge">${s.currentStatus}</span></td>
+                            </tr>`;
+                } else {
+                    tableBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Kargo bulunamadı.</td></tr>';
+                }
+            } catch (error) {
+                console.error("Arama hatası:", error);
             }
         }
 
         // Sayfa açıldığında verileri yükle
-        loadShipments();
-        function filterShipments() {
-            let input = document.getElementById('searchInput').value.toUpperCase();
-            let table = document.getElementById('shipmentList');
-            let rows = table.getElementsByTagName('tr');
-
-            for (let i = 0; i < rows.length; i++) {
-                let td = rows[i].getElementsByTagName('td')[0]; // Takip No sütunu
-                if (td) {
-                    let textValue = td.textContent || td.innerText;
-                    if (textValue.toUpperCase().indexOf(input) > -1) {
-                        rows[i].style.display = "";
-                    } else {
-                        rows[i].style.display = "none";
-                    }
-                }
-            }
-        }
-     async function searchShipment() {
-    const trackingNo = document.getElementById('searchInput').value.trim();
-    const tableBody = document.getElementById('shipmentTableBody');
-
-    // Eğer kutu boşsa listeyi eski haline döndür
-    if (!trackingNo) {
-    loadShipments();
-    return;
-    }
-
-    try {
-    // Senin yeni yazdığın Backend ucuna (Endpoint) istek atıyoruz
-    const response = await fetch(`/api/Shipments/search/${trackingNo}`);
-
-    if (response.ok) {
-    const s = await response.json();
-    // Tabloyu temizle ve sadece bulduğumuz tek kargoyu bas
-    tableBody.innerHTML = `
-    <tr>
-        <td><strong>${s.trackingNumber}</strong></td>
-        <td>${s.receiverName}</td>
-        <td>${s.destinationCity}</td>
-        <td><span class="status-badge bg-success text-white p-1 rounded">${s.currentStatus}</span></td>
-    </tr>`;
-    } else {
-    // Kargo bulunamadığında tabloyu boş göster veya mesaj yaz
-    tableBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Kargo bulunamadı.</td></tr>';
-    }
-    } catch (error) {
-    console.error("Arama sırasında hata oluştu:", error);
-    }
-    }
+        window.onload = loadShipments;
     </script>
-
 </body>
 </html>
