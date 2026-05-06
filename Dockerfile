@@ -28,4 +28,8 @@ RUN dotnet publish "./CloudScale.Logic.API.csproj" -c $BUILD_CONFIGURATION -o /a
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+
+# wwwroot klasörünün kopyalandığından emin olmak için bu satırı ekleyebilirsin:
+COPY --from=publish /app/publish/wwwroot ./wwwroot
+
 ENTRYPOINT ["dotnet", "CloudScale.Logic.API.dll"]
