@@ -68,7 +68,7 @@
                 <div class="card p-4">
                     <h5 class="card-title mb-3">Güncel Sevkiyatlar</h5>
                     <div class="mb-3">
-                        <input type="text" id="searchInput" class="form-control" placeholder="🔍 Takip No ile Ara..." onkeyup="filterShipments()">
+                        <input type="text" id="searchInput" class="form-control" placeholder="Takip No ile Ara..." oninput="searchShipment()">
                     </div>
                     <table class="table table-hover">
                         <thead>
@@ -89,28 +89,28 @@
     </div>
 
     <script>
-    const apiUri = '/api/Shipments';
+        const apiUri = '/api/Shipments';
 
-    // 1. Kargoları Ohio'dan Getir
-    async function loadShipments() {
-        const response = await fetch(apiUri);
-        const data = await response.json();
-        const list = document.getElementById('shipmentList');
-        list.innerHTML = '';
+        // 1. Kargoları Ohio'dan Getir
+        async function loadShipments() {
+            const response = await fetch(apiUri);
+            const data = await response.json();
+            const list = document.getElementById('shipmentList');
+            list.innerHTML = '';
 
-        data.forEach(s => {
-            list.innerHTML += `
-                <tr>
-                    <td><strong>${s.trackingNumber}</strong></td>
-                    <td>${s.receiverName}</td>
-                    <td>${s.destinationCity}</td>
-                    <td><span class="badge bg-success status-badge">${s.currentStatus}</span></td>
-                </tr>
-            `;
-        });
-    }
+            data.forEach(s => {
+                list.innerHTML += `
+                    <tr>
+                        <td><strong>${s.trackingNumber}</strong></td>
+                        <td>${s.receiverName}</td>
+                        <td>${s.destinationCity}</td>
+                        <td><span class="badge bg-success status-badge">${s.currentStatus}</span></td>
+                    </tr>
+                `;
+            });
+        }
 
-    // 2. Yeni Kargo Gönder
+        // 2. Yeni Kargo Gönder
         async function addShipment() {
             // Form verilerini alıyoruz
             const shipment = {
@@ -138,7 +138,7 @@
             }
         }
 
-    // Sayfa açıldığında verileri yükle
+        // Sayfa açıldığında verileri yükle
         loadShipments();
         function filterShipments() {
             let input = document.getElementById('searchInput').value.toUpperCase();
@@ -157,6 +157,38 @@
                 }
             }
         }
+     async function searchShipment() {
+    const trackingNo = document.getElementById('searchInput').value.trim();
+    const tableBody = document.getElementById('shipmentTableBody');
+
+    // Eğer kutu boşsa listeyi eski haline döndür
+    if (!trackingNo) {
+    loadShipments();
+    return;
+    }
+
+    try {
+    // Senin yeni yazdığın Backend ucuna (Endpoint) istek atıyoruz
+    const response = await fetch(`/api/Shipments/search/${trackingNo}`);
+
+    if (response.ok) {
+    const s = await response.json();
+    // Tabloyu temizle ve sadece bulduğumuz tek kargoyu bas
+    tableBody.innerHTML = `
+    <tr>
+        <td><strong>${s.trackingNumber}</strong></td>
+        <td>${s.receiverName}</td>
+        <td>${s.destinationCity}</td>
+        <td><span class="status-badge bg-success text-white p-1 rounded">${s.currentStatus}</span></td>
+    </tr>`;
+    } else {
+    // Kargo bulunamadığında tabloyu boş göster veya mesaj yaz
+    tableBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Kargo bulunamadı.</td></tr>';
+    }
+    } catch (error) {
+    console.error("Arama sırasında hata oluştu:", error);
+    }
+    }
     </script>
 
 </body>

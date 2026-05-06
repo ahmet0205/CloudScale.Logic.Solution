@@ -23,6 +23,20 @@ namespace CloudScale.Logic.API.Controllers
         {
             return await _context.Shipments.ToListAsync();
         }
+        // GET: api/Shipments/search/CS-12345
+        [HttpGet("search/{trackingNumber}")]
+        public async Task<ActionResult<Shipment>> SearchShipment(string trackingNumber)
+        {
+            var shipment = await _context.Shipments
+                .FirstOrDefaultAsync(s => s.TrackingNumber == trackingNumber);
+
+            if (shipment == null)
+            {
+                return NotFound(new { message = "Kargo bulunamadı." });
+            }
+
+            return shipment;
+        }
 
         // 2. Yeni Kargo Ekleme (POST: api/shipments)
         [HttpPost]
