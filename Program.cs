@@ -39,13 +39,8 @@ using (var scope = app.Services.CreateScope())
 }
 app.UseDefaultFiles();
 app.UseStaticFiles();
-
-if (app.Environment.IsDevelopment() || true)
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
+app.UseSwagger();
+app.UseSwaggerUI();
 //app.UseHttpsRedirection();
 app.UseCors();
 app.UseAuthorization();
