@@ -37,6 +37,8 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine(">>> HATA: " + ex.Message);
     }
 }
+app.UseDefaultFiles();
+app.UseStaticFiles();
 
 if (app.Environment.IsDevelopment() || true)
 {
@@ -44,8 +46,7 @@ if (app.Environment.IsDevelopment() || true)
     app.UseSwaggerUI();
 }
 
-app.UseStaticFiles();
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 app.UseCors();
 app.UseAuthorization();
 app.MapControllers();
