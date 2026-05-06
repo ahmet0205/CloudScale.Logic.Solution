@@ -29,18 +29,12 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = services.GetRequiredService<AppDbContext>();
-
-        // Önce temizlik: Varsa hatalý tablolarý siliyoruz
-        context.Database.EnsureDeleted();
-
-        // Sonra kurulum: Senin modeline göre Ohio'da tablolarý sýfýrdan kuruyoruz
-        context.Database.EnsureCreated();
-
-        Console.WriteLine(">>> Ohio Veritabaný baþarýyla sýfýrlandý ve Shipments tablosu kuruldu! <<<");
+        context.Database.EnsureCreated(); // Sadece yoksa oluþturur, varsa dokunmaz.
+        Console.WriteLine(">>> Ohio Veritabaný Hazýr! <<<");
     }
     catch (Exception ex)
     {
-        Console.WriteLine(">>> KRÝTÝK HATA: Veritabaný yapýlandýrýlamadý! " + ex.Message);
+        Console.WriteLine(">>> HATA: " + ex.Message);
     }
 }
 
